@@ -13,6 +13,15 @@ namespace aliyun_api_gateway_sdk.Util
 {
     public class HttpUtil
     {
+        public static HttpWebResponse HttpGet(String url, String appKey, String appSecret, int timeout, Dictionary<String, String> headers, Dictionary<String, String> formParam, List<String> signHeaderPrefixList)
+        {
+            headers = InitialBasicHeader(headers, appKey, appSecret, HttpMethod.GET, url, formParam, signHeaderPrefixList);
+            HttpWebRequest httpRequest = InitHttpRequest(url, HttpMethod.GET, timeout, headers);
+
+            HttpWebResponse httpResponse = GetResponse(httpRequest);
+            return httpResponse;
+        }
+
         public static HttpWebResponse HttpGet(String url, String appKey, String appSecret, int timeout, Dictionary<String, String> headers, List<String> signHeaderPrefixList) 
         {
             headers = InitialBasicHeader(headers, appKey, appSecret, HttpMethod.GET, url, null, signHeaderPrefixList);

@@ -57,8 +57,8 @@ namespace aliyun_api_gateway_sdk
         private static void doPostForm() {
             String url = "/postform";
             Dictionary<String, String> headers = new Dictionary<string, string>();
-            headers.Add(HttpHeader.HTTP_HEADER_CONTENT_TYPE, ContentType.CONTENT_TYPE_FORM);
-            headers.Add(HttpHeader.HTTP_HEADER_ACCEPT, ContentType.CONTENT_TYPE_JSON);
+            headers.Add(HttpHeader.HTTP_HEADER_CONTENT_TYPE, aliyun_api_gateway_sdk.Constant.ContentType.CONTENT_TYPE_FORM);
+            headers.Add(HttpHeader.HTTP_HEADER_ACCEPT, aliyun_api_gateway_sdk.Constant.ContentType.CONTENT_TYPE_JSON);
             Dictionary<String, String> formParam = new Dictionary<string, string>();
             formParam.Add("name", "testly");
             using (HttpWebResponse response = HttpUtil.HttpPost(host + url, appKey, appSecret, 30000, headers, formParam, null))

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace aliyun_api_gateway_sdk.Constant
 {
-    class ContentType
+    public class ContentType
     {
         //表单类型Content-Type
         public  const String CONTENT_TYPE_FORM = "application/x-www-form-urlencoded; charset=utf-8";
