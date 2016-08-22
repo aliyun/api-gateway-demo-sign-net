@@ -69,7 +69,7 @@ namespace aliyun_api_gateway_sdk.Util
                 {
                     bodyDict = new Dictionary<String, String>();
                 }
-                if (String.IsNullOrEmpty(queryString)) {
+                if (!String.IsNullOrEmpty(queryString)) {
                     foreach (var query in queryString.Split('&'))
                     {
                         String key = query.Split('=')[0];
@@ -77,7 +77,7 @@ namespace aliyun_api_gateway_sdk.Util
                         if (query.Split('=').Length == 2) {
                             value = query.Split('=')[1];
                         }
-                        if (bodyDict[key] == null)
+                        if (bodyDict.ContainsKey(key) == false)
                         {
                             bodyDict.Add(key, value);
                         }

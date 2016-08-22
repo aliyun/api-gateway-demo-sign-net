@@ -1,6 +1,7 @@
 ﻿using aliyun_api_gateway_sdk.Constant;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -13,15 +14,6 @@ namespace aliyun_api_gateway_sdk.Util
 {
     public class HttpUtil
     {
-        public static HttpWebResponse HttpGet(String url, String appKey, String appSecret, int timeout, Dictionary<String, String> headers, Dictionary<String, String> formParam, List<String> signHeaderPrefixList)
-        {
-            headers = InitialBasicHeader(headers, appKey, appSecret, HttpMethod.GET, url, formParam, signHeaderPrefixList);
-            HttpWebRequest httpRequest = InitHttpRequest(url, HttpMethod.GET, timeout, headers);
-
-            HttpWebResponse httpResponse = GetResponse(httpRequest);
-            return httpResponse;
-        }
-
         public static HttpWebResponse HttpGet(String url, String appKey, String appSecret, int timeout, Dictionary<String, String> headers, List<String> signHeaderPrefixList) 
         {
             headers = InitialBasicHeader(headers, appKey, appSecret, HttpMethod.GET, url, null, signHeaderPrefixList);
@@ -231,7 +223,6 @@ namespace aliyun_api_gateway_sdk.Util
             headers.Add(SystemHeader.X_CA_NONCE, Guid.NewGuid().ToString());
             headers.Add(SystemHeader.X_CA_KEY, appKey);
             headers.Add(SystemHeader.X_CA_SIGNATURE, SignUtil.Sign(method, stringBuilder.ToString(),appSecret, headers, formParam, signHeaderPrefixList));
-
             return headers;
         }
 
