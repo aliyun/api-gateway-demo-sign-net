@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Security;
+using System.Web;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
@@ -13,56 +14,63 @@ namespace aliyun_api_gateway_sdk.Util
 {
     public class HttpUtil
     {
-        public static HttpWebResponse HttpGet(String url, String appKey, String appSecret, int timeout, Dictionary<String, String> headers, List<String> signHeaderPrefixList) 
+        public static HttpWebResponse HttpPost(String host, String path, String appKey, String appSecret, int timeout, Dictionary<String, String> headers, Dictionary<String, String> querys, Dictionary<String, String> bodys, List<String> signHeaderPrefixList)
         {
-            headers = InitialBasicHeader(headers, appKey, appSecret, HttpMethod.GET, url, null, signHeaderPrefixList);
-            HttpWebRequest httpRequest = InitHttpRequest(url, HttpMethod.GET, timeout, headers);
-
-            HttpWebResponse httpResponse = GetResponse(httpRequest);
-            return httpResponse;     
+            return DoHttp(host, path, HttpMethod.POST, appKey, appSecret, timeout, headers, querys, bodys, signHeaderPrefixList);
         }
 
-        public static HttpWebResponse HttpDelete(String url, String appKey, String appSecret, int timeout, Dictionary<String, String> headers, List<String> signHeaderPrefixList)
+        public static HttpWebResponse HttpPut(String host, String path, String appKey, String appSecret, int timeout, Dictionary<String, String> headers, Dictionary<String, String> querys, Dictionary<String, String> bodys, List<String> signHeaderPrefixList)
         {
-            headers = InitialBasicHeader(headers, appKey, appSecret, HttpMethod.DELETE, url, null, signHeaderPrefixList);
-            HttpWebRequest httpRequest = InitHttpRequest(url, HttpMethod.DELETE, timeout, headers);
-
-            HttpWebResponse httpResponse = GetResponse(httpRequest);
-            return httpResponse;
+            return DoHttp(host, path, HttpMethod.PUT, appKey, appSecret, timeout, headers, querys, bodys, signHeaderPrefixList);
         }
 
-        public static HttpWebResponse HttpHead(String url, String appKey, String appSecret, int timeout, Dictionary<String, String> headers, List<String> signHeaderPrefixList)
+        public static HttpWebResponse HttpGet(String host, String path, String appKey, String appSecret, int timeout, Dictionary<String, String> headers, Dictionary<String, String> querys, List<String> signHeaderPrefixList)
         {
-            headers = InitialBasicHeader(headers, appKey, appSecret, HttpMethod.HEAD, url, null, signHeaderPrefixList);
-            HttpWebRequest httpRequest = InitHttpRequest(url, HttpMethod.HEAD, timeout, headers);
+            return DoHttp(host, path, HttpMethod.GET, appKey, appSecret, timeout, headers, querys, null, signHeaderPrefixList);
+        }
 
-            HttpWebResponse httpResponse = GetResponse(httpRequest);
-            return httpResponse;
+        public static HttpWebResponse HttpHead(String host, String path, String appKey, String appSecret, int timeout, Dictionary<String, String> headers, Dictionary<String, String> querys, List<String> signHeaderPrefixList)
+        {
+            return DoHttp(host, path, HttpMethod.HEAD, appKey, appSecret, timeout, headers, querys, null, signHeaderPrefixList);
+        }
+
+        public static HttpWebResponse HttpDelete(String host, String path, String appKey, String appSecret, int timeout, Dictionary<String, String> headers, Dictionary<String, String> querys, List<String> signHeaderPrefixList)
+        {
+            return DoHttp(host, path, HttpMethod.DELETE, appKey, appSecret, timeout, headers, querys, null, signHeaderPrefixList);
         }
 
 
-        public static HttpWebResponse HttpPost(String url, String appKey, String appSecret, int timeout, Dictionary<String, String> headers, Dictionary<String, String> formParam, List<String> signHeaderPrefixList)
-        {
-            headers = InitialBasicHeader(headers, appKey, appSecret, HttpMethod.POST, url, formParam, signHeaderPrefixList);
-            HttpWebRequest httpRequest = InitHttpRequest(url, HttpMethod.POST, timeout, headers);
 
-            if (!(formParam == null || formParam.Count == 0))
+
+
+        private static HttpWebResponse DoHttp(String host, String path, String method, String appKey, String appSecret, int timeout, Dictionary<String, String> headers, Dictionary<String, String> querys, Dictionary<String, String> bodys, List<String> signHeaderPrefixList)
+        {
+            headers = InitialBasicHeader(path, appKey, appSecret, method, headers, querys, bodys, signHeaderPrefixList);
+            HttpWebRequest httpRequest = InitHttpRequest(host, path, method, timeout, headers, querys);
+
+            if (null != bodys && 0 < bodys.Count)
             {
-                StringBuilder buffer = new StringBuilder();
-                int i = 0;
-                foreach (string key in formParam.Keys)
+                StringBuilder sb = new StringBuilder();
+                foreach (var param in bodys)
                 {
-                    if (i > 0)
+                    if (0 < sb.Length)
                     {
-                        buffer.AppendFormat("&{0}={1}", key, formParam[key]);
+                        sb.Append("&");
                     }
-                    else
+                    if (null != param.Value && 0 == param.Key.Length)
                     {
-                        buffer.AppendFormat("{0}={1}", key, formParam[key]);
+                        sb.Append(param.Value);
                     }
-                    i++;
+                    if (0 < param.Key.Length)
+                    {
+                        sb.Append(param.Key).Append("=");
+                        if (null != param.Value)
+                        {
+                            sb.Append(HttpUtility.UrlEncode(param.Value, Encoding.UTF8));
+                        }
+                    }
                 }
-                byte[] data = Encoding.UTF8.GetBytes(buffer.ToString());
+                byte[] data = Encoding.UTF8.GetBytes(sb.ToString());
                 using (Stream stream = httpRequest.GetRequestStream())
                 {
                     stream.Write(data, 0, data.Length);
@@ -72,77 +80,6 @@ namespace aliyun_api_gateway_sdk.Util
             HttpWebResponse httpResponse = GetResponse(httpRequest);
             return httpResponse;
         }
-
-        public static HttpWebResponse HttpPost(String url, String appKey, String appSecret, int timeout, Dictionary<String, String> headers, byte[] data, List<String> signHeaderPrefixList)
-        {
-            headers = InitialBasicHeader(headers, appKey, appSecret, HttpMethod.POST, url, null, signHeaderPrefixList);
-            HttpWebRequest httpRequest = InitHttpRequest(url, HttpMethod.POST, timeout, headers);
-
-            if (!(data == null || data.Length == 0))
-            {
-                using (Stream stream = httpRequest.GetRequestStream())
-                {
-                    stream.Write(data, 0, data.Length);
-                }
-            }
-
-            HttpWebResponse httpResponse = GetResponse(httpRequest);
-            return httpResponse;
-        }
-
-        public static HttpWebResponse HttpPost(String url, String appKey, String appSecret, int timeout, Dictionary<String, String> headers, String body, List<String> signHeaderPrefixList)
-        {
-            headers = InitialBasicHeader(headers, appKey, appSecret, HttpMethod.POST, url, null, signHeaderPrefixList);
-            HttpWebRequest httpRequest = InitHttpRequest(url, HttpMethod.POST, timeout, headers);
-
-            if (!String.IsNullOrEmpty(body))
-            {
-                using (Stream stream = httpRequest.GetRequestStream())
-                {
-                    byte[] data = Encoding.UTF8.GetBytes(body.ToString());
-                    stream.Write(data, 0, data.Length);
-                }
-            }
-
-            HttpWebResponse httpResponse = GetResponse(httpRequest);
-            return httpResponse;
-        }
-
-        public static HttpWebResponse HttpPut(String url, String appKey, String appSecret, int timeout, Dictionary<String, String> headers, byte[] data, List<String> signHeaderPrefixList)
-        {
-            headers = InitialBasicHeader(headers, appKey, appSecret, HttpMethod.PUT, url, null, signHeaderPrefixList);
-            HttpWebRequest httpRequest = InitHttpRequest(url, HttpMethod.PUT, timeout, headers);
-
-            if (!(data == null || data.Length == 0))
-            {
-                using (Stream stream = httpRequest.GetRequestStream())
-                {
-                    stream.Write(data, 0, data.Length);
-                }
-            }
-
-            HttpWebResponse httpResponse = GetResponse(httpRequest);
-            return httpResponse;
-        }
-
-        public static HttpWebResponse HttpPut(String url, String appKey, String appSecret, int timeout, Dictionary<String, String> headers, String body, List<String> signHeaderPrefixList)
-        {
-            headers = InitialBasicHeader(headers, appKey, appSecret, HttpMethod.PUT, url, null, signHeaderPrefixList);
-            HttpWebRequest httpRequest = InitHttpRequest(url, HttpMethod.PUT, timeout, headers);
-
-            if (!String.IsNullOrEmpty(body))
-            {
-                using (Stream stream = httpRequest.GetRequestStream())
-                {
-                    byte[] data = Encoding.UTF8.GetBytes(body.ToString());
-                    stream.Write(data, 0, data.Length);
-                }
-            }
-
-            HttpWebResponse httpResponse = GetResponse(httpRequest);
-            return httpResponse;
-        }
-
 
         private static HttpWebResponse GetResponse(HttpWebRequest httpRequest)
         {
@@ -160,10 +97,44 @@ namespace aliyun_api_gateway_sdk.Util
             return httpResponse;
         }
 
-        private static HttpWebRequest InitHttpRequest(String url,String method, int timeout, Dictionary<String, String> headers)
+        private static HttpWebRequest InitHttpRequest(String host, String path, String method, int timeout, Dictionary<String, String> headers, Dictionary<String, String> querys)
         {
             HttpWebRequest httpRequest = null;
-            if (url.Contains("https"))
+            String url = host;
+            if (null != path)
+            {
+                url = url + path;
+            }
+
+            if (null != querys && 0 < querys.Count)
+            {
+                StringBuilder sb = new StringBuilder();
+                foreach (var param in querys)
+                {
+                    if (0 < sb.Length)
+                    {
+                        sb.Append("&");
+                    }
+                    if (null != param.Value && null == param.Key)
+                    {
+                        sb.Append(param.Value);
+                    }
+                    if (null != param.Key)
+                    {
+                        sb.Append(param.Key).Append("=");
+                        if (null != param.Value)
+                        {
+                            sb.Append(HttpUtility.UrlEncode(param.Value, Encoding.UTF8));
+                        }
+                    }
+                }
+                if (0 < sb.Length)
+                {
+                    url = url + "?" + sb.ToString();
+                }
+            }
+
+            if (host.Contains("https://"))
             {
                 ServicePointManager.ServerCertificateValidationCallback = new RemoteCertificateValidationCallback(CheckValidationResult);
                 httpRequest = (HttpWebRequest)WebRequest.CreateDefault(new Uri(url));
@@ -198,30 +169,20 @@ namespace aliyun_api_gateway_sdk.Util
         }
 
 
-        private static Dictionary<String, String> InitialBasicHeader(Dictionary<String, String> headers, String appKey, String appSecret, String method, String requestAddress, Dictionary<String, String> formParam, List<String> signHeaderPrefixList)
+        private static Dictionary<String, String> InitialBasicHeader(String path, String appKey, String appSecret, String method, Dictionary<String, String> headers, Dictionary<String, String> querys, Dictionary<String, String> bodys, List<String> signHeaderPrefixList)
         {
-            if (headers == null) {
+            if (headers == null)
+            {
                 headers = new Dictionary<String, String>();
             }
 
-            Uri uri = new Uri(requestAddress);
-            StringBuilder stringBuilder = new StringBuilder();
-            if (!String.IsNullOrEmpty(uri.LocalPath) && !"/".Equals(uri.LocalPath))
-            {
-                stringBuilder.Append(uri.LocalPath);
-            }
-
-            if (!String.IsNullOrEmpty(uri.Query))
-            {
-                //stringBuilder.Append("?");
-                stringBuilder.Append(uri.Query);
-            }
-
-            //headers.Add(HttpHeader.HTTP_HEADER_USER_AGENT, Constants.USER_AGENT);
+            StringBuilder sb = new StringBuilder();
+            //时间戳
             headers.Add(SystemHeader.X_CA_TIMESTAMP, DateUtil.ConvertDateTimeInt(DateTime.Now).ToString());
+            //防重放，协议层不能进行重试，否则会报NONCE被使用；如果需要协议层重试，请注释此行
             headers.Add(SystemHeader.X_CA_NONCE, Guid.NewGuid().ToString());
             headers.Add(SystemHeader.X_CA_KEY, appKey);
-            headers.Add(SystemHeader.X_CA_SIGNATURE, SignUtil.Sign(method, stringBuilder.ToString(),appSecret, headers, formParam, signHeaderPrefixList));
+            headers.Add(SystemHeader.X_CA_SIGNATURE, SignUtil.Sign(path, method, appSecret, headers, querys, bodys, signHeaderPrefixList));
 
             return headers;
         }

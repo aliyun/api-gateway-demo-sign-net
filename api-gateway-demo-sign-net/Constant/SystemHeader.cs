@@ -18,5 +18,7 @@ namespace aliyun_api_gateway_sdk.Constant
         public  const String X_CA_NONCE = "X-Ca-Nonce";
         //APP KEY
         public  const String X_CA_KEY = "X-Ca-Key";
+        //请求API所属Stage
+        public const String X_CA_STAGE = "X-Ca-Stage";
     }
 }

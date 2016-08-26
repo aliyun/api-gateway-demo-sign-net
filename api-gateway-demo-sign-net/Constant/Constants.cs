@@ -16,6 +16,10 @@ namespace aliyun_api_gateway_sdk.Constant
         public  const String USER_AGENT = "demo/aliyun/net";
         //换行符
         public  const String LF = "\n";
+        //分隔符1
+        public const String SPE1 = ",";
+        //分隔符2
+        public const String SPE2 = ":";
 
         //默认请求超时时间,单位毫秒
         public  const int DEFAULT_TIMEOUT = 1000;

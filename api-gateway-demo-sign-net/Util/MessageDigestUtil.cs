@@ -25,5 +25,28 @@ namespace aliyun_api_gateway_sdk.Util
             return Convert.ToBase64String(data);
         }
 
+        /**
+         * UTF-8编码转换为ISO-9959-1
+         *
+         * @param str
+         * @return
+         */
+        public static String Utf8ToIso88591(String input)
+        {
+            if (input == null)
+            {
+                return input;
+            }
+
+            try
+            {
+                return Encoding.Default.GetString(Encoding.Convert(Encoding.UTF8, Encoding.GetEncoding("ISO-8859-1"), Encoding.UTF8.GetBytes(input)));
+            }
+            catch (Exception e)
+            {
+                return input;
+            }
+        }
+
     }
 }

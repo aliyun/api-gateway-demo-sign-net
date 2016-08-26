@@ -8,21 +8,20 @@ using System.Threading.Tasks;
 
 namespace aliyun_api_gateway_sdk.Util
 {
-    class SignUtil
+    public class SignUtil
     {
-        public static string Sign(String method, String url, String sectet, Dictionary<String, String> headers, Dictionary<String, String> bodyDict, List<String> signHeaderPrefixList)
+        public static string Sign(String path, String method, String secret, Dictionary<String, String> headers, Dictionary<String, String> querys, Dictionary<String, String> bodys, List<String> signHeaderPrefixList)
         {
             using (var algorithm = KeyedHashAlgorithm.Create("HMACSHA256"))
             {
-                algorithm.Key = Encoding.UTF8.GetBytes(sectet.ToCharArray());
-                String signStr = BuildStringToSign(headers, url, bodyDict, method, signHeaderPrefixList);
+                algorithm.Key = Encoding.UTF8.GetBytes(secret.ToCharArray());
+                String signStr = BuildStringToSign(path, method, headers, querys, bodys, signHeaderPrefixList);
                 return Convert.ToBase64String(algorithm.ComputeHash(Encoding.UTF8.GetBytes(signStr.ToCharArray())));
             }
         }
 
-        private static String BuildStringToSign(Dictionary<String, String> headers, String url, Dictionary<String, String> bodyDict, String method, List<String> signHeaderPrefixList)
+        private static String BuildStringToSign(String path, String method, Dictionary<String, String> headers, Dictionary<String, String> querys, Dictionary<String, String> bodys, List<String> signHeaderPrefixList)
         {
-
             StringBuilder sb = new StringBuilder();
 
             sb.Append(method.ToUpper()).Append(Constants.LF);
@@ -47,7 +46,7 @@ namespace aliyun_api_gateway_sdk.Util
             }
             sb.Append(Constants.LF);
             sb.Append(BuildHeaders(headers, signHeaderPrefixList));
-            sb.Append(BuildResource(url, bodyDict));
+            sb.Append(BuildResource(path, querys, bodys));
 
             return sb.ToString();
         }
@@ -59,58 +58,58 @@ namespace aliyun_api_gateway_sdk.Util
          * @param formParamMap POST表单参数
          * @return 待签名Path+Query+FormParams
          */
-        private static String BuildResource(String url, Dictionary<String, String> bodyDict)
+        private static String BuildResource(String path, Dictionary<String, String> querys, Dictionary<String, String> bodys)
         {
-            if (url.Contains("?")) {
-                String path = url.Split('?')[0];
-                String queryString = url.Split('?')[1];
-                url = path;
-                if (bodyDict == null)
+            StringBuilder sb = new StringBuilder();
+            if (null != path)
+            {
+                sb.Append(path);
+            }
+            StringBuilder sbParam = new StringBuilder();
+            IDictionary<String, String> sortParams = new SortedDictionary<String, String>(StringComparer.Ordinal);
+
+            //query参与签名
+            if (querys != null && querys.Count > 0)
+            {
+                foreach (var param in querys)
                 {
-                    bodyDict = new Dictionary<String, String>();
-                }
-                if (String.IsNullOrEmpty(queryString)) {
-                    foreach (var query in queryString.Split('&'))
+                    if (0 < param.Key.Length)
                     {
-                        String key = query.Split('=')[0];
-                        String value = "";
-                        if (query.Split('=').Length == 2) {
-                            value = query.Split('=')[1];
-                        }
-                        if (bodyDict[key] == null)
-                        {
-                            bodyDict.Add(key, value);
-                        }
+                        sortParams.Add(param.Key, param.Value);
                     }
                 }
             }
 
-            StringBuilder sb = new StringBuilder();
-            sb.Append(url);
-
-            if (bodyDict != null && bodyDict.Count > 0)
+            //body参与签名
+            if (bodys != null && bodys.Count > 0)
             {
-                sb.Append('?');
-
-                //参数Key按字典排序
-                IDictionary<String, String> sortDict = new SortedDictionary<String, String>(bodyDict, StringComparer.Ordinal);
-          
-                int flag = 0;
-                foreach (var str in sortDict) {
-                    if (flag != 0) {
-                        sb.Append('&');
-                    }
-
-                    flag++;
-                    String key = str.Key;
-                    String val = str.Value;
-
-                    if (String.IsNullOrEmpty(val)) {
-                        sb.Append(key);
-                    } else {
-                        sb.Append(key).Append("=").Append(val);
+                foreach (var param in bodys)
+                {
+                    if (0 < param.Key.Length)
+                    {
+                        sortParams.Add(param.Key, param.Value);
                     }
                 }
+            }
+            //参数Key           
+            foreach (var param in sortParams)
+            {
+                if (0 < param.Key.Length)
+                {
+                    if (0 < sbParam.Length)
+                    {
+                        sbParam.Append("&");
+                    }
+                    sbParam.Append(param.Key).Append("=");
+                    if (!String.IsNullOrEmpty(param.Value))
+                    {
+                        sbParam.Append(param.Value);
+                    }
+                }
+            }
+            if (0 < sbParam.Length)
+            {
+                sb.Append("?").Append(sbParam);
             }
 
             return sb.ToString();
@@ -124,33 +123,47 @@ namespace aliyun_api_gateway_sdk.Util
         * @param signHeaderPrefixList 自定义参与签名Header前缀
         * @return 待签名Http头
         */
-        private static String BuildHeaders(Dictionary<String, String> headers, List<String> signHeaderPrefixList) {
-            Dictionary<String, String> headersToSign = new Dictionary<String, String>();
+        private static String BuildHeaders(Dictionary<String, String> headers, List<String> signHeaderPrefixList)
+        {
+            StringBuilder sb = new StringBuilder();
 
-            if (headers != null) {
+            if (null != signHeaderPrefixList)
+            {
+                //剔除X-Ca-Signature/X-Ca-Signature-Headers/Accept/Content-MD5/Content-Type/Date
+                signHeaderPrefixList.Remove("X-Ca-Signature");
+                signHeaderPrefixList.Remove("X-Ca-Signature-Headers");
+                signHeaderPrefixList.Remove("Accept");
+                signHeaderPrefixList.Remove("Content-MD5");
+                signHeaderPrefixList.Remove("Content-Type");
+                signHeaderPrefixList.Remove("Date");
+                signHeaderPrefixList.Sort(StringComparer.Ordinal);
+            }
+
+            //Dictionary<String, String> headersToSign = new Dictionary<String, String>();            
+            if (null != headers)
+            {
+                IDictionary<String, String> sortedParams = new SortedDictionary<String, String>(headers, StringComparer.Ordinal);
                 StringBuilder signHeadersStringBuilder = new StringBuilder();
 
-                int flag = 0;
-                foreach  (var header in headers) {
-                    if (IsHeaderToSign(header.Key, signHeaderPrefixList)) {
-                        if (flag != 0) {
-                            signHeadersStringBuilder.Append(",");
+                foreach (var param in sortedParams)
+                {
+                    if (IsHeaderToSign(param.Key, signHeaderPrefixList))
+                    {
+                        sb.Append(param.Key).Append(Constants.SPE2);
+                        if (null != param.Value)
+                        {
+                            sb.Append(param.Value);
                         }
-                        flag++;
-                        signHeadersStringBuilder.Append(header.Key);
-                        headersToSign.Add(header.Key, header.Value);
+                        sb.Append(Constants.LF);
+                        if (0 < signHeadersStringBuilder.Length)
+                        {
+                            signHeadersStringBuilder.Append(Constants.SPE1);
+                        }
+                        signHeadersStringBuilder.Append(param.Key);
                     }
                 }
 
                 headers.Add(SystemHeader.X_CA_SIGNATURE_HEADERS, signHeadersStringBuilder.ToString());
-            }
-
-            IDictionary<String, String> sortedDict = new SortedDictionary<String, String>(headersToSign, StringComparer.Ordinal);
-
-            StringBuilder sb = new StringBuilder();
-            foreach (var val in sortedDict)
-            {
-                sb.Append(val.Key).Append(':').Append(val.Value).Append(Constants.LF);
             }
 
             return sb.ToString();
@@ -161,16 +174,20 @@ namespace aliyun_api_gateway_sdk.Util
         * Http头是否参与签名
         * return
         */
-        private static bool IsHeaderToSign(String headerName, List<String> signHeaderPrefixList) {
-            if (String.IsNullOrEmpty(headerName) ) {
+        private static bool IsHeaderToSign(String headerName, List<String> signHeaderPrefixList)
+        {
+            if (String.IsNullOrEmpty(headerName))
+            {
                 return false;
             }
 
-            if (headerName.StartsWith(Constants.CA_HEADER_TO_SIGN_PREFIX_SYSTEM)) {
+            if (headerName.StartsWith(Constants.CA_HEADER_TO_SIGN_PREFIX_SYSTEM))
+            {
                 return true;
             }
 
-            if (signHeaderPrefixList != null) {
+            if (signHeaderPrefixList != null)
+            {
                 foreach (var signHeaderPrefix in signHeaderPrefixList)
                 {
                     if (headerName.StartsWith(signHeaderPrefix))
