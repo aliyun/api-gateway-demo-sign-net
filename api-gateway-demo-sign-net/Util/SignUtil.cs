@@ -100,10 +100,10 @@ namespace aliyun_api_gateway_sdk.Util
                     {
                         sbParam.Append("&");
                     }
-                    sbParam.Append(param.Key).Append("=");
+                    sbParam.Append(param.Key);
                     if (!String.IsNullOrEmpty(param.Value))
-                    {
-                        sbParam.Append(param.Value);
+                    {                        
+                        sbParam.Append("=").Append(param.Value);
                     }
                 }
             }
