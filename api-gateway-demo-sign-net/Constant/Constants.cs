@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace aliyun_api_gateway_sdk.Constant
 {
-    class Constants
+    public class Constants
     {
         //签名算法HmacSha256
         public  const String HMAC_SHA256 = "HmacSHA256";
