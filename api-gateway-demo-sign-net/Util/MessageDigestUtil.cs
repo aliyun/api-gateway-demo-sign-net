@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace aliyun_api_gateway_sdk.Util
 {
-    class MessageDigestUtil
+    public class MessageDigestUtil
     {
         public static string Base64AndMD5(string input) {
             if (input == null || input.Length == 0)
