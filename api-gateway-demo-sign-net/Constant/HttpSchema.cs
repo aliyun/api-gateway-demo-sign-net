@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace aliyun_api_gateway_sdk.Constant
 {
-    class HttpSchema
+    public class HttpSchema
     {
          //HTTP
         public const String HTTP = "http://";
