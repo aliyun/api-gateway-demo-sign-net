@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace aliyun_api_gateway_sdk.Constant
 {
-    class SystemHeader
+    public class SystemHeader
     {
         //签名Header
         public  const String X_CA_SIGNATURE = "X-Ca-Signature";
