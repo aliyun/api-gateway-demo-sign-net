@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace aliyun_api_gateway_sdk.Constant
 {
-    class HttpHeader
+    public class HttpHeader
     {
         //请求Header Accept
         public  const String HTTP_HEADER_ACCEPT = "Accept";
