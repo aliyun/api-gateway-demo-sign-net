@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace aliyun_api_gateway_sdk.Constant
 {
-    class HttpMethod
+    public class HttpMethod
     {
         //GET
         public  const String GET = "GET";
