@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace aliyun_api_gateway_sdk.Util
 {
-    class DateUtil
+    public class DateUtil
     {
         private const string ISO8601_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss'Z'";
 
