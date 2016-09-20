@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace aliyun_api_gateway_sdk.Enums
 {
-    enum Method
+    public enum Method
     {
         GET, POST_FORM, POST_STRING, POST_BYTES, PUT_STRING, PUT_BYTES, DELETE
     }
